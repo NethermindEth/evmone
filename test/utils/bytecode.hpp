@@ -63,6 +63,25 @@ inline bytecode operator*(int n, evmc_opcode op)
     return n * bytecode{op};
 }
 
+inline bytecode eof_header(uint16_t code_size, uint16_t data_size = 0)
+{
+    bytecode out{"efcafe0101"};
+    out += bytecode{static_cast<evmc_opcode>(code_size >> 8)} +
+           static_cast<evmc_opcode>(code_size & 0xff);
+    if (data_size != 0)
+    {
+        out += "02" + bytecode{static_cast<evmc_opcode>(data_size >> 8)} +
+               static_cast<evmc_opcode>(data_size & 0xff);
+    }
+    out += "00";
+    return out;
+}
+
+inline bytecode eof_bytecode(bytecode code, bytecode data = {})
+{
+    return eof_header(static_cast<uint16_t>(code.size()), static_cast<uint16_t>(data.size())) +
+           code + data;
+}
 
 inline bytecode push(bytes_view data)
 {
