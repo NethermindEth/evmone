@@ -116,7 +116,7 @@ inline void mulmod(Stack& stack) noexcept
     m = m != 0 ? intx::mulmod(x, y, m) : 0;
 }
 
-#define INTX_NEW 1
+#define INTX_NEW 0
 
 inline evmc_status_code exp(ExecutionState& state) noexcept
 {
@@ -165,7 +165,7 @@ inline void gt(Stack& stack) noexcept
     stack[0] = stack[0] < x;  // TODO: Using < is faster than >.
 }
 
-#define INTX_SLT 1
+#define INTX_SLT 0
 
 inline void slt(Stack& stack) noexcept
 {
