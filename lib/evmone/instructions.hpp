@@ -116,13 +116,19 @@ inline void mulmod(Stack& stack) noexcept
     m = m != 0 ? intx::mulmod(x, y, m) : 0;
 }
 
+#define INTX_NEW 1
+
 inline evmc_status_code exp(ExecutionState& state) noexcept
 {
     const auto base = state.stack.pop();
     auto& exponent = state.stack.top();
 
     const auto exponent_significant_bytes =
+#if INTX_NEW
+        static_cast<int>(intx::count_significant_bytes(exponent));
+#else
         static_cast<int>(intx::count_significant_words<uint8_t>(exponent));
+#endif
     const auto exponent_cost = state.rev >= EVMC_SPURIOUS_DRAGON ? 50 : 10;
     const auto additional_cost = exponent_significant_bytes * exponent_cost;
     if ((state.gas_left -= additional_cost) < 0)
@@ -159,23 +165,37 @@ inline void gt(Stack& stack) noexcept
     stack[0] = stack[0] < x;  // TODO: Using < is faster than >.
 }
 
+#define INTX_SLT 1
+
 inline void slt(Stack& stack) noexcept
 {
+#if INTX_SLT
+    const auto x = stack.pop();
+    auto& y = stack[0];
+    y = slt(x, y);
+#else
     // TODO: Move this to intx.
     const auto x = stack.pop();
     auto& y = stack[0];
     const auto x_neg = x.hi.hi >> 63;
     const auto y_neg = y.hi.hi >> 63;
     y = ((x_neg ^ y_neg) != 0) ? x_neg : x < y;
+#endif
 }
 
 inline void sgt(Stack& stack) noexcept
 {
+#if INTX_SLT
+    const auto x = stack.pop();
+    auto& y = stack[0];
+    y = slt(y, x);
+#else
     const auto x = stack.pop();
     auto& y = stack[0];
     const auto x_neg = x.hi.hi >> 63;
     const auto y_neg = y.hi.hi >> 63;
     y = ((x_neg ^ y_neg) != 0) ? y_neg : y < x;
+#endif
 }
 
 inline void eq(Stack& stack) noexcept
