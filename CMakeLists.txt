@@ -43,6 +43,10 @@ option(EVMC_TOOLS "Build EVMC test tools" ${EVMONE_TESTING})
 option(EVMC_INSTALL "Install EVMC" OFF)
 add_subdirectory(evmc)
 
+option(INTX_TESTING "Build intx with tests" OFF)
+option(INTX_BENCHMARKING "Build intx with benchmark tools" OFF)
+add_subdirectory(intx)
+
 cable_configure_compiler(NO_STACK_PROTECTION)
 if(CABLE_COMPILER_GNULIKE)
     add_compile_options(

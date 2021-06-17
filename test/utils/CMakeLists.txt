@@ -2,7 +2,7 @@
 # Copyright 2019 The evmone Authors.
 # SPDX-License-Identifier: Apache-2.0
 
-find_package(intx CONFIG REQUIRED)
+#find_package(intx CONFIG REQUIRED)
 
 add_library(testutils STATIC
     bytecode.hpp
