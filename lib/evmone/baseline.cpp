@@ -10,6 +10,15 @@
 #include <evmc/instructions.h>
 #include <memory>
 
+#ifdef _MSC_VER
+#define CASE(OPCODE) case OP_##OPCODE:
+#else
+#define CASE(OPCODE)  \
+    case OP_##OPCODE: \
+        asm("#" #OPCODE);
+#endif
+
+
 namespace evmone::baseline
 {
 CodeAnalysis analyze(const uint8_t* code, size_t code_size)
@@ -141,266 +150,266 @@ evmc_result execute(const VM& vm, ExecutionState& state, const CodeAnalysis& ana
 
         switch (op)
         {
-        case OP_STOP:
+            CASE(STOP)
             goto exit;
-        case OP_ADD:
+            CASE(ADD)
             add(state.stack);
             break;
-        case OP_MUL:
+            CASE(MUL)
             mul(state.stack);
             break;
-        case OP_SUB:
+            CASE(SUB)
             sub(state.stack);
             break;
-        case OP_DIV:
+            CASE(DIV)
             div(state.stack);
             break;
-        case OP_SDIV:
+            CASE(SDIV)
             sdiv(state.stack);
             break;
-        case OP_MOD:
+            CASE(MOD)
             mod(state.stack);
             break;
-        case OP_SMOD:
+            CASE(SMOD)
             smod(state.stack);
             break;
-        case OP_ADDMOD:
+            CASE(ADDMOD)
             addmod(state.stack);
             break;
-        case OP_MULMOD:
+            CASE(MULMOD)
             mulmod(state.stack);
             break;
-        case OP_EXP:
-        {
-            const auto status_code = exp(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(EXP)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = exp(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_SIGNEXTEND:
+            CASE(SIGNEXTEND)
             signextend(state.stack);
             break;
 
-        case OP_LT:
+            CASE(LT)
             lt(state.stack);
             break;
-        case OP_GT:
+            CASE(GT)
             gt(state.stack);
             break;
-        case OP_SLT:
+            CASE(SLT)
             slt(state.stack);
             break;
-        case OP_SGT:
+            CASE(SGT)
             sgt(state.stack);
             break;
-        case OP_EQ:
+            CASE(EQ)
             eq(state.stack);
             break;
-        case OP_ISZERO:
+            CASE(ISZERO)
             iszero(state.stack);
             break;
-        case OP_AND:
+            CASE(AND)
             and_(state.stack);
             break;
-        case OP_OR:
+            CASE(OR)
             or_(state.stack);
             break;
-        case OP_XOR:
+            CASE(XOR)
             xor_(state.stack);
             break;
-        case OP_NOT:
+            CASE(NOT)
             not_(state.stack);
             break;
-        case OP_BYTE:
+            CASE(BYTE)
             byte(state.stack);
             break;
-        case OP_SHL:
+            CASE(SHL)
             shl(state.stack);
             break;
-        case OP_SHR:
+            CASE(SHR)
             shr(state.stack);
             break;
-        case OP_SAR:
+            CASE(SAR)
             sar(state.stack);
             break;
 
-        case OP_KECCAK256:
-        {
-            const auto status_code = keccak256(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(KECCAK256)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = keccak256(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
 
-        case OP_ADDRESS:
+            CASE(ADDRESS)
             address(state);
             break;
-        case OP_BALANCE:
-        {
-            const auto status_code = balance(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(BALANCE)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = balance(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_ORIGIN:
+            CASE(ORIGIN)
             origin(state);
             break;
-        case OP_CALLER:
+            CASE(CALLER)
             caller(state);
             break;
-        case OP_CALLVALUE:
+            CASE(CALLVALUE)
             callvalue(state);
             break;
-        case OP_CALLDATALOAD:
+            CASE(CALLDATALOAD)
             calldataload(state);
             break;
-        case OP_CALLDATASIZE:
+            CASE(CALLDATASIZE)
             calldatasize(state);
             break;
-        case OP_CALLDATACOPY:
-        {
-            const auto status_code = calldatacopy(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(CALLDATACOPY)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = calldatacopy(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_CODESIZE:
+            CASE(CODESIZE)
             codesize(state);
             break;
-        case OP_CODECOPY:
-        {
-            const auto status_code = codecopy(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(CODECOPY)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = codecopy(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_GASPRICE:
+            CASE(GASPRICE)
             gasprice(state);
             break;
-        case OP_EXTCODESIZE:
-        {
-            const auto status_code = extcodesize(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(EXTCODESIZE)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = extcodesize(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_EXTCODECOPY:
-        {
-            const auto status_code = extcodecopy(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(EXTCODECOPY)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = extcodecopy(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_RETURNDATASIZE:
+            CASE(RETURNDATASIZE)
             returndatasize(state);
             break;
-        case OP_RETURNDATACOPY:
-        {
-            const auto status_code = returndatacopy(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(RETURNDATACOPY)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = returndatacopy(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_EXTCODEHASH:
-        {
-            const auto status_code = extcodehash(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(EXTCODEHASH)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = extcodehash(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_BLOCKHASH:
+            CASE(BLOCKHASH)
             blockhash(state);
             break;
-        case OP_COINBASE:
+            CASE(COINBASE)
             coinbase(state);
             break;
-        case OP_TIMESTAMP:
+            CASE(TIMESTAMP)
             timestamp(state);
             break;
-        case OP_NUMBER:
+            CASE(NUMBER)
             number(state);
             break;
-        case OP_DIFFICULTY:
+            CASE(DIFFICULTY)
             difficulty(state);
             break;
-        case OP_GASLIMIT:
+            CASE(GASLIMIT)
             gaslimit(state);
             break;
-        case OP_CHAINID:
+            CASE(CHAINID)
             chainid(state);
             break;
-        case OP_SELFBALANCE:
+            CASE(SELFBALANCE)
             selfbalance(state);
             break;
-        case OP_BASEFEE:
+            CASE(BASEFEE)
             basefee(state);
             break;
 
-        case OP_POP:
+            CASE(POP)
             pop(state.stack);
             break;
-        case OP_MLOAD:
-        {
-            const auto status_code = mload(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(MLOAD)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = mload(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_MSTORE:
-        {
-            const auto status_code = mstore(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(MSTORE)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = mstore(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_MSTORE8:
-        {
-            const auto status_code = mstore8(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(MSTORE8)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = mstore8(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
 
-        case OP_JUMP:
+            CASE(JUMP)
             pc = op_jump(state, analysis.jumpdest_map);
             continue;
-        case OP_JUMPI:
+            CASE(JUMPI)
             if (state.stack[1] != 0)
             {
                 pc = op_jump(state, analysis.jumpdest_map);
@@ -413,354 +422,356 @@ evmc_result execute(const VM& vm, ExecutionState& state, const CodeAnalysis& ana
             state.stack.pop();
             continue;
 
-        case OP_PC:
+            CASE(PC)
             state.stack.push(pc - code);
             break;
-        case OP_MSIZE:
+            CASE(MSIZE)
             msize(state);
             break;
-        case OP_SLOAD:
-        {
-            const auto status_code = sload(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(SLOAD)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = sload(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_SSTORE:
-        {
-            const auto status_code = sstore(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(SSTORE)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = sstore(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_GAS:
+            CASE(GAS)
             state.stack.push(state.gas_left);
             break;
-        case OP_JUMPDEST:
+            CASE(JUMPDEST)
             break;
 
-        case OP_PUSH1:
+            CASE(PUSH1)
             pc = load_push<1>(state, pc + 1);
             continue;
-        case OP_PUSH2:
+
+            CASE(PUSH2)
             pc = load_push<2>(state, pc + 1);
             continue;
-        case OP_PUSH3:
+
+            CASE(PUSH3)
             pc = load_push<3>(state, pc + 1);
             continue;
-        case OP_PUSH4:
+            CASE(PUSH4)
             pc = load_push<4>(state, pc + 1);
             continue;
-        case OP_PUSH5:
+            CASE(PUSH5)
             pc = load_push<5>(state, pc + 1);
             continue;
-        case OP_PUSH6:
+            CASE(PUSH6)
             pc = load_push<6>(state, pc + 1);
             continue;
-        case OP_PUSH7:
+            CASE(PUSH7)
             pc = load_push<7>(state, pc + 1);
             continue;
-        case OP_PUSH8:
+            CASE(PUSH8)
             pc = load_push<8>(state, pc + 1);
             continue;
-        case OP_PUSH9:
+            CASE(PUSH9)
             pc = load_push<9>(state, pc + 1);
             continue;
-        case OP_PUSH10:
+            CASE(PUSH10)
             pc = load_push<10>(state, pc + 1);
             continue;
-        case OP_PUSH11:
+            CASE(PUSH11)
             pc = load_push<11>(state, pc + 1);
             continue;
-        case OP_PUSH12:
+            CASE(PUSH12)
             pc = load_push<12>(state, pc + 1);
             continue;
-        case OP_PUSH13:
+            CASE(PUSH13)
             pc = load_push<13>(state, pc + 1);
             continue;
-        case OP_PUSH14:
+            CASE(PUSH14)
             pc = load_push<14>(state, pc + 1);
             continue;
-        case OP_PUSH15:
+            CASE(PUSH15)
             pc = load_push<15>(state, pc + 1);
             continue;
-        case OP_PUSH16:
+            CASE(PUSH16)
             pc = load_push<16>(state, pc + 1);
             continue;
-        case OP_PUSH17:
+            CASE(PUSH17)
             pc = load_push<17>(state, pc + 1);
             continue;
-        case OP_PUSH18:
+            CASE(PUSH18)
             pc = load_push<18>(state, pc + 1);
             continue;
-        case OP_PUSH19:
+            CASE(PUSH19)
             pc = load_push<19>(state, pc + 1);
             continue;
-        case OP_PUSH20:
+            CASE(PUSH20)
             pc = load_push<20>(state, pc + 1);
             continue;
-        case OP_PUSH21:
+            CASE(PUSH21)
             pc = load_push<21>(state, pc + 1);
             continue;
-        case OP_PUSH22:
+            CASE(PUSH22)
             pc = load_push<22>(state, pc + 1);
             continue;
-        case OP_PUSH23:
+            CASE(PUSH23)
             pc = load_push<23>(state, pc + 1);
             continue;
-        case OP_PUSH24:
+            CASE(PUSH24)
             pc = load_push<24>(state, pc + 1);
             continue;
-        case OP_PUSH25:
+            CASE(PUSH25)
             pc = load_push<25>(state, pc + 1);
             continue;
-        case OP_PUSH26:
+            CASE(PUSH26)
             pc = load_push<26>(state, pc + 1);
             continue;
-        case OP_PUSH27:
+            CASE(PUSH27)
             pc = load_push<27>(state, pc + 1);
             continue;
-        case OP_PUSH28:
+            CASE(PUSH28)
             pc = load_push<28>(state, pc + 1);
             continue;
-        case OP_PUSH29:
+            CASE(PUSH29)
             pc = load_push<29>(state, pc + 1);
             continue;
-        case OP_PUSH30:
+            CASE(PUSH30)
             pc = load_push<30>(state, pc + 1);
             continue;
-        case OP_PUSH31:
+            CASE(PUSH31)
             pc = load_push<31>(state, pc + 1);
             continue;
-        case OP_PUSH32:
+            CASE(PUSH32)
             pc = load_push<32>(state, pc + 1);
             continue;
 
-        case OP_DUP1:
+            CASE(DUP1)
             dup<1>(state.stack);
             break;
-        case OP_DUP2:
+            CASE(DUP2)
             dup<2>(state.stack);
             break;
-        case OP_DUP3:
+            CASE(DUP3)
             dup<3>(state.stack);
             break;
-        case OP_DUP4:
+            CASE(DUP4)
             dup<4>(state.stack);
             break;
-        case OP_DUP5:
+            CASE(DUP5)
             dup<5>(state.stack);
             break;
-        case OP_DUP6:
+            CASE(DUP6)
             dup<6>(state.stack);
             break;
-        case OP_DUP7:
+            CASE(DUP7)
             dup<7>(state.stack);
             break;
-        case OP_DUP8:
+            CASE(DUP8)
             dup<8>(state.stack);
             break;
-        case OP_DUP9:
+            CASE(DUP9)
             dup<9>(state.stack);
             break;
-        case OP_DUP10:
+            CASE(DUP10)
             dup<10>(state.stack);
             break;
-        case OP_DUP11:
+            CASE(DUP11)
             dup<11>(state.stack);
             break;
-        case OP_DUP12:
+            CASE(DUP12)
             dup<12>(state.stack);
             break;
-        case OP_DUP13:
+            CASE(DUP13)
             dup<13>(state.stack);
             break;
-        case OP_DUP14:
+            CASE(DUP14)
             dup<14>(state.stack);
             break;
-        case OP_DUP15:
+            CASE(DUP15)
             dup<15>(state.stack);
             break;
-        case OP_DUP16:
+            CASE(DUP16)
             dup<16>(state.stack);
             break;
 
-        case OP_SWAP1:
+            CASE(SWAP1)
             swap<1>(state.stack);
             break;
-        case OP_SWAP2:
+            CASE(SWAP2)
             swap<2>(state.stack);
             break;
-        case OP_SWAP3:
+            CASE(SWAP3)
             swap<3>(state.stack);
             break;
-        case OP_SWAP4:
+            CASE(SWAP4)
             swap<4>(state.stack);
             break;
-        case OP_SWAP5:
+            CASE(SWAP5)
             swap<5>(state.stack);
             break;
-        case OP_SWAP6:
+            CASE(SWAP6)
             swap<6>(state.stack);
             break;
-        case OP_SWAP7:
+            CASE(SWAP7)
             swap<7>(state.stack);
             break;
-        case OP_SWAP8:
+            CASE(SWAP8)
             swap<8>(state.stack);
             break;
-        case OP_SWAP9:
+            CASE(SWAP9)
             swap<9>(state.stack);
             break;
-        case OP_SWAP10:
+            CASE(SWAP10)
             swap<10>(state.stack);
             break;
-        case OP_SWAP11:
+            CASE(SWAP11)
             swap<11>(state.stack);
             break;
-        case OP_SWAP12:
+            CASE(SWAP12)
             swap<12>(state.stack);
             break;
-        case OP_SWAP13:
+            CASE(SWAP13)
             swap<13>(state.stack);
             break;
-        case OP_SWAP14:
+            CASE(SWAP14)
             swap<14>(state.stack);
             break;
-        case OP_SWAP15:
+            CASE(SWAP15)
             swap<15>(state.stack);
             break;
-        case OP_SWAP16:
+            CASE(SWAP16)
             swap<16>(state.stack);
             break;
 
-        case OP_LOG0:
-        {
-            const auto status_code = log(state, 0);
-            if (status_code != EVMC_SUCCESS)
+            CASE(LOG0)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = log(state, 0);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_LOG1:
-        {
-            const auto status_code = log(state, 1);
-            if (status_code != EVMC_SUCCESS)
+            CASE(LOG1)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = log(state, 1);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_LOG2:
-        {
-            const auto status_code = log(state, 2);
-            if (status_code != EVMC_SUCCESS)
+            CASE(LOG2)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = log(state, 2);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_LOG3:
-        {
-            const auto status_code = log(state, 3);
-            if (status_code != EVMC_SUCCESS)
+            CASE(LOG3)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = log(state, 3);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_LOG4:
-        {
-            const auto status_code = log(state, 4);
-            if (status_code != EVMC_SUCCESS)
+            CASE(LOG4)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = log(state, 4);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
 
-        case OP_CREATE:
-        {
-            const auto status_code = create<EVMC_CREATE>(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(CREATE)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = create<EVMC_CREATE>(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_CALL:
-        {
-            const auto status_code = call<EVMC_CALL>(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(CALL)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = call<EVMC_CALL>(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_CALLCODE:
-        {
-            const auto status_code = call<EVMC_CALLCODE>(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(CALLCODE)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = call<EVMC_CALLCODE>(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_RETURN:
+            CASE(RETURN)
             op_return<EVMC_SUCCESS>(state);
             goto exit;
-        case OP_DELEGATECALL:
-        {
-            const auto status_code = call<EVMC_DELEGATECALL>(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(DELEGATECALL)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = call<EVMC_DELEGATECALL>(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_STATICCALL:
-        {
-            const auto status_code = call<EVMC_CALL, true>(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(STATICCALL)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = call<EVMC_CALL, true>(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_CREATE2:
-        {
-            const auto status_code = create<EVMC_CREATE2>(state);
-            if (status_code != EVMC_SUCCESS)
+            CASE(CREATE2)
             {
-                state.status = status_code;
-                goto exit;
+                const auto status_code = create<EVMC_CREATE2>(state);
+                if (status_code != EVMC_SUCCESS)
+                {
+                    state.status = status_code;
+                    goto exit;
+                }
+                break;
             }
-            break;
-        }
-        case OP_REVERT:
+            CASE(REVERT)
             op_return<EVMC_REVERT>(state);
             goto exit;
-        case OP_INVALID:
+            CASE(INVALID)
             state.status = EVMC_INVALID_INSTRUCTION;
             goto exit;
-        case OP_SELFDESTRUCT:
+            CASE(SELFDESTRUCT)
             state.status = selfdestruct(state);
             goto exit;
         default:
