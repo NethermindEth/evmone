@@ -127,7 +127,7 @@ inline evmc_status_code exp(ExecutionState& state) noexcept
 #if INTX_NEW
         static_cast<int>(intx::count_significant_bytes(exponent));
 #else
-        static_cast<int>(intx::count_significant_words<uint8_t>(exponent));
+        1;
 #endif
     const auto exponent_cost = state.rev >= EVMC_SPURIOUS_DRAGON ? 50 : 10;
     const auto additional_cost = exponent_significant_bytes * exponent_cost;
@@ -166,6 +166,7 @@ inline void gt(Stack& stack) noexcept
 }
 
 #define INTX_SLT 0
+#define INTX_ARR 1
 
 inline void slt(Stack& stack) noexcept
 {
@@ -173,6 +174,12 @@ inline void slt(Stack& stack) noexcept
     const auto x = stack.pop();
     auto& y = stack[0];
     y = slt(x, y);
+#elif INTX_ARR
+    const auto x = stack.pop();
+    auto& y = stack[0];
+    const auto x_neg = x[3] >> 63;
+    const auto y_neg = y[3] >> 63;
+    y = ((x_neg ^ y_neg) != 0) ? x_neg : x < y;
 #else
     // TODO: Move this to intx.
     const auto x = stack.pop();
@@ -189,6 +196,12 @@ inline void sgt(Stack& stack) noexcept
     const auto x = stack.pop();
     auto& y = stack[0];
     y = slt(y, x);
+#elif INTX_ARR
+    const auto x = stack.pop();
+    auto& y = stack[0];
+    const auto x_neg = x[3] >> 63;
+    const auto y_neg = y[3] >> 63;
+    y = ((x_neg ^ y_neg) != 0) ? y_neg : y < x;
 #else
     const auto x = stack.pop();
     auto& y = stack[0];
