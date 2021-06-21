@@ -362,6 +362,7 @@ constexpr op_table op_tables[] = {
     create_op_table<EVMC_ISTANBUL>(),
     create_op_table<EVMC_BERLIN>(),
     create_op_table<EVMC_LONDON>(),
+    create_op_table<EVMC_SHANGHAI>(),
 };
 static_assert(
     std::size(op_tables) == EVMC_MAX_REVISION + 1, "op table entry missing for an EVMC revision");

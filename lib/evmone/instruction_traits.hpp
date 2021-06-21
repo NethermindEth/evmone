@@ -370,4 +370,7 @@ constexpr inline std::array<int16_t, 256> gas_costs<EVMC_LONDON> = []() noexcept
     return table;
 }();
 
+template <>
+constexpr inline auto gas_costs<EVMC_SHANGHAI> = gas_costs<EVMC_LONDON>;
+
 }  // namespace evmone::instr

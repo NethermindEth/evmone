@@ -40,6 +40,7 @@ constexpr InstructionTable instruction_tables[] = {
     create_instruction_table<EVMC_ISTANBUL>(),
     create_instruction_table<EVMC_BERLIN>(),
     create_instruction_table<EVMC_LONDON>(),
+    create_instruction_table<EVMC_SHANGHAI>(),
 };
 static_assert(std::size(instruction_tables) == EVMC_MAX_REVISION + 1,
     "instruction table entry missing for an EVMC revision");
