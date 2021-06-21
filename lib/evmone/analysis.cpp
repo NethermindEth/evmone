@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "analysis.hpp"
+#include "eof.hpp"
 #include "opcodes_helpers.h"
 #include <cassert>
 
@@ -39,7 +40,8 @@ struct block_analysis
     }
 };
 
-AdvancedCodeAnalysis analyze(evmc_revision rev, const uint8_t* code, size_t code_size) noexcept
+AdvancedCodeAnalysis analyze(
+    evmc_revision rev, const uint8_t* code, size_t code_size, const EOF1Header& header) noexcept
 {
     const auto& op_tbl = get_op_table(rev);
     const auto opx_beginblock_fn = op_tbl[OPX_BEGINBLOCK].fn;
@@ -57,8 +59,8 @@ AdvancedCodeAnalysis analyze(evmc_revision rev, const uint8_t* code, size_t code
     analysis.instrs.emplace_back(opx_beginblock_fn);
     auto block = block_analysis{0};
 
-    const auto code_end = code + code_size;
-    auto code_pos = code;
+    const auto code_end = code + header.code_end(code_size);
+    auto code_pos = code + header.code_begin();
 
     while (code_pos != code_end)
     {

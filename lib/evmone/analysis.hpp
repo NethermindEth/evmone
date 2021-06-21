@@ -15,6 +15,7 @@
 
 namespace evmone
 {
+struct EOF1Header;
 struct instruction;
 
 /// Compressed information about instruction basic block.
@@ -149,7 +150,7 @@ inline int find_jumpdest(const AdvancedCodeAnalysis& analysis, int offset) noexc
 }
 
 EVMC_EXPORT AdvancedCodeAnalysis analyze(
-    evmc_revision rev, const uint8_t* code, size_t code_size) noexcept;
+    evmc_revision rev, const uint8_t* code, size_t code_size, const EOF1Header& header) noexcept;
 
 EVMC_EXPORT const op_table& get_op_table(evmc_revision rev) noexcept;
 
