@@ -25,7 +25,7 @@ struct CodeAnalysis
 };
 
 /// Analyze the code to build the bitmap of valid JUMPDEST locations.
-EVMC_EXPORT CodeAnalysis analyze(const uint8_t* code, size_t code_size);
+EVMC_EXPORT CodeAnalysis analyze(const uint8_t* code, size_t code_size, const EOF1Header& header);
 
 /// Executes in Baseline interpreter using EVMC-compatible parameters.
 evmc_result execute(evmc_vm* vm, const evmc_host_interface* host, evmc_host_context* ctx,

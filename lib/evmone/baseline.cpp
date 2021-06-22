@@ -13,16 +13,17 @@
 
 namespace evmone::baseline
 {
-CodeAnalysis analyze(const uint8_t* code, size_t code_size)
+CodeAnalysis analyze(const uint8_t* code, size_t code_size, const EOF1Header& header)
 {
     // To find if op is any PUSH opcode (OP_PUSH1 <= op <= OP_PUSH32)
     // it can be noticed that OP_PUSH32 is INT8_MAX (0x7f) therefore
     // static_cast<int8_t>(op) <= OP_PUSH32 is always true and can be skipped.
     static_assert(OP_PUSH32 == std::numeric_limits<int8_t>::max());
 
-    CodeAnalysis::JumpdestMap map(code_size);  // Allocate and init bitmap with zeros.
-    size_t i = 0;
-    while (i < code_size)
+    const auto code_end = header.code_end(code_size);
+    CodeAnalysis::JumpdestMap map(code_end);  // Allocate and init bitmap with zeros.
+    size_t i = header.code_begin();
+    while (i < code_end)
     {
         const auto op = code[i];
         if (static_cast<int8_t>(op) >= OP_PUSH1)  // If any PUSH opcode (see explanation above).
@@ -35,7 +36,7 @@ CodeAnalysis analyze(const uint8_t* code, size_t code_size)
     // i is the needed code size including the last push data (can be bigger than code_size).
     // Using "raw" new operator instead of std::make_unique() to get uninitialized array.
     std::unique_ptr<uint8_t[]> padded_code{new uint8_t[i + 1]};  // +1 for the final STOP.
-    std::copy_n(code, code_size, padded_code.get());
+    std::copy_n(code, code_end, padded_code.get());
     padded_code[i] = OP_STOP;  // Set final STOP at the code end.
 
     // TODO: Using fixed-size padding of 33, the padded code buffer and jumpdest bitmap can be
@@ -801,7 +802,7 @@ evmc_result execute(evmc_vm* c_vm, const evmc_host_interface* host, evmc_host_co
     EOF1Header eof1_header;
     if (rev >= EVMC_SHANGHAI && is_eof_code(code, code_size))
         eof1_header = read_valid_eof1_header(code);
-    const auto jumpdest_map = analyze(code, code_size);
+    const auto jumpdest_map = analyze(code, code_size, eof1_header);
     auto state = std::make_unique<ExecutionState>(*msg, rev, *host, ctx, code, code_size);
     return execute(*vm, *state, eof1_header, jumpdest_map);
 }
