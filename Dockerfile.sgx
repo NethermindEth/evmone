@@ -6,7 +6,7 @@ RUN apt-get update -q && apt-get install -qy --no-install-recommends \
 
 ADD . /src
 
-WORKDIR /src
+RUN cd /src && git submodule update --init
 
 RUN mkdir /build \
  && cmake -S /src -B /build -G Ninja -DEVMONE_TESTING=ON -DHUNTER_ROOT=/build \
@@ -17,5 +17,5 @@ RUN mkdir /build \
 
 USER evmone 
 
-CMD "./build.sh"
+CMD cd /src && ./build.sh
 
