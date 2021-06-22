@@ -14,6 +14,25 @@ constexpr uint8_t FORMAT = 0xef;
 constexpr uint8_t MAGIC[] = {0xca, 0xfe};
 }  // namespace
 
+size_t EOF1Header::code_begin() const noexcept
+{
+    if (code_size == 0)
+        return 0;  // legacy code
+
+    if (data_size == 0)
+        return std::size(MAGIC) + 6;
+    else
+        return std::size(MAGIC) + 9;
+}
+
+size_t EOF1Header::code_end(size_t container_size) const noexcept
+{
+    if (code_size == 0)
+        return container_size;  // legacy code
+    else
+        return code_begin() + static_cast<size_t>(code_size);
+}
+
 bool is_eof_code(const uint8_t* code, size_t code_size) noexcept
 {
     static_assert(std::size(MAGIC) == 2);

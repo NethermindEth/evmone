@@ -4,6 +4,7 @@
 
 #include "baseline.hpp"
 #include "baseline_instruction_table.hpp"
+#include "eof.hpp"
 #include "execution_state.hpp"
 #include "instructions.hpp"
 #include "vm.hpp"
@@ -45,17 +46,17 @@ CodeAnalysis analyze(const uint8_t* code, size_t code_size)
 
 namespace
 {
-const uint8_t* op_jump(
-    ExecutionState& state, const CodeAnalysis::JumpdestMap& jumpdest_map) noexcept
+const uint8_t* op_jump(ExecutionState& state, const CodeAnalysis::JumpdestMap& jumpdest_map,
+    const uint8_t* code, const EOF1Header& header) noexcept
 {
     const auto dst = state.stack.pop();
     if (dst >= jumpdest_map.size() || !jumpdest_map[static_cast<size_t>(dst)])
     {
         state.status = EVMC_BAD_JUMP_DESTINATION;
-        return &state.code[0] + state.code.size();
+        return code + header.code_end(state.code.size());
     }
 
-    return &state.code[static_cast<size_t>(dst)];
+    return code + static_cast<size_t>(dst);
 }
 
 template <size_t Len>
@@ -109,25 +110,25 @@ inline evmc_status_code check_requirements(
 }
 
 template <bool TracingEnabled>
-evmc_result execute(const VM& vm, ExecutionState& state, const CodeAnalysis& analysis) noexcept
+evmc_result execute(const VM& vm, ExecutionState& state, const EOF1Header& header,
+    const CodeAnalysis& analysis) noexcept
 {
-    // Use padded code.
-    state.code = {analysis.padded_code.get(), state.code.size()};
-
     auto* tracer = vm.get_tracer();
     if constexpr (TracingEnabled)
         tracer->notify_execution_start(state.rev, *state.msg, state.code);
 
     const auto& instruction_table = get_baseline_instruction_table(state.rev);
 
-    const auto* const code = state.code.data();
-    auto pc = code;
-    while (true)  // Guaranteed to terminate because padded code ends with STOP.
+    // Use padded code for pc.
+    // CODECOPY/CODESIZE will still use original code from state.code
+    const auto* const padded_code = analysis.padded_code.get();
+    const auto* pc = padded_code + header.code_begin();
+    while (true)  // Guaranteed to terminate because padded code ends with STOP or INVALID
     {
         if constexpr (TracingEnabled)
         {
-            const auto offset = static_cast<uint32_t>(pc - code);
-            if (offset < state.code.size())  // Skip STOP from code padding.
+            const auto offset = static_cast<uint32_t>(pc - padded_code);
+            if (offset < header.code_end(state.code.size()))  // Skip STOP/INVALID in code padding.
                 tracer->notify_instruction_start(offset, state);
         }
 
@@ -398,12 +399,12 @@ evmc_result execute(const VM& vm, ExecutionState& state, const CodeAnalysis& ana
         }
 
         case OP_JUMP:
-            pc = op_jump(state, analysis.jumpdest_map);
+            pc = op_jump(state, analysis.jumpdest_map, analysis.padded_code.get(), header);
             continue;
         case OP_JUMPI:
             if (state.stack[1] != 0)
             {
-                pc = op_jump(state, analysis.jumpdest_map);
+                pc = op_jump(state, analysis.jumpdest_map, analysis.padded_code.get(), header);
             }
             else
             {
@@ -414,7 +415,7 @@ evmc_result execute(const VM& vm, ExecutionState& state, const CodeAnalysis& ana
             continue;
 
         case OP_PC:
-            state.stack.push(pc - code);
+            state.stack.push(pc - padded_code);
             break;
         case OP_MSIZE:
             msize(state);
@@ -784,20 +785,24 @@ exit:
 }
 }  // namespace
 
-evmc_result execute(const VM& vm, ExecutionState& state, const CodeAnalysis& analysis) noexcept
+evmc_result execute(const VM& vm, ExecutionState& state, const EOF1Header& header,
+    const CodeAnalysis& analysis) noexcept
 {
     if (INTX_UNLIKELY(vm.get_tracer() != nullptr))
-        return execute<true>(vm, state, analysis);
+        return execute<true>(vm, state, header, analysis);
 
-    return execute<false>(vm, state, analysis);
+    return execute<false>(vm, state, header, analysis);
 }
 
 evmc_result execute(evmc_vm* c_vm, const evmc_host_interface* host, evmc_host_context* ctx,
     evmc_revision rev, const evmc_message* msg, const uint8_t* code, size_t code_size) noexcept
 {
     auto vm = static_cast<VM*>(c_vm);
+    EOF1Header eof1_header;
+    if (rev >= EVMC_SHANGHAI && is_eof_code(code, code_size))
+        eof1_header = read_valid_eof1_header(code);
     const auto jumpdest_map = analyze(code, code_size);
     auto state = std::make_unique<ExecutionState>(*msg, rev, *host, ctx, code, code_size);
-    return execute(*vm, *state, jumpdest_map);
+    return execute(*vm, *state, eof1_header, jumpdest_map);
 }
 }  // namespace evmone::baseline
