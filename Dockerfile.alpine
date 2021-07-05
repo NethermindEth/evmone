@@ -1,0 +1,23 @@
+# stage 1 build
+FROM alpine:3.10 AS base-image
+
+RUN apk add --no-cache ca-certificates build-base boost-dev g++ ninja cmake cmake-doc extra-cmake-modules extra-cmake-modules-doc ccache ccache-doc
+
+ADD . /src
+RUN mkdir -p /src/build \
+ && cd /src \
+ && cmake -S . -B build -DEVMONE_TESTING=ON \
+ && cmake --build build --parallel 
+
+#FROM alpine:3.10
+#
+#RUN apk add --no-cache libstdc++
+#
+#COPY --from=base-image /src/build/bin/evmc /bin/evmc
+#COPY --from=base-image /src/build/bin/evmc-vmtester /bin/evmc-vmtester 
+#COPY --from=base-image /src/build/bin/evmone-bench /bin/evmone-bench           
+#COPY --from=base-image /src/build/bin/evmone-bench-internal /bin/evmone-bench-internal  
+#COPY --from=base-image /src/build/bin/evmone-unittests /bin/evmone-unittests
+#COPY --from=base-image /src/test /src/test
+
+CMD ["/src/build/bin/evmone-bench", "/src/test/benchmarks"]
