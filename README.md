@@ -66,7 +66,7 @@ To build the evmone EVMC module (shared library), test, and benchmark:
 
 1. Fetch the source code:
    ```
-   git clone --recursive https://github.com/ethereum/evmone
+   git clone --recursive https://github.com/NethermindEth/evmone
    cd evmone
    ```
 
@@ -117,6 +117,15 @@ with it.
 ```bash
 docker run --entrypoint evmone-bench ethereum/evmone /src/test/benchmarks
 ```
+
+## Run under SGX
+
+1. Install [Intel SGX SDK](https://github.com/intel/linux-sgx), ensure `driver`, `sdk` and `psw` are properly installed.
+2. Run example apps inside linux-sgx-proy/SampleCode/… To see if `sdk` and `psw` are properly installed.
+3. Clone project from https://github.com/NethermindEth/evmone.git
+4. Download [Mystikos](https://github.com/deislabs/mystikos#download-mystikos)
+5. [Follow this steps](https://github.com/deislabs/mystikos/blob/main/doc/user-getting-started-docker-c++.md#build-the-app-folder-with-mystikos) for run app using Dockerfile.alpine
+
 
 ## References
 
