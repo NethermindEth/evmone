@@ -10,24 +10,10 @@ namespace evmone
 {
 namespace
 {
-template <void InstrFn(Stack&)>
+template <InstrFn Fn>
 const instruction* op(const instruction* instr, AdvancedExecutionState& state) noexcept
 {
-    InstrFn(state.stack);
-    return ++instr;
-}
-
-template <void InstrFn(ExecutionState&)>
-const instruction* op(const instruction* instr, AdvancedExecutionState& state) noexcept
-{
-    InstrFn(state);
-    return ++instr;
-}
-
-template <evmc_status_code InstrFn(ExecutionState&)>
-const instruction* op(const instruction* instr, AdvancedExecutionState& state) noexcept
-{
-    const auto status_code = InstrFn(state);
+    const auto status_code = Fn(state);
     if (status_code != EVMC_SUCCESS)
         return state.exit(status_code);
     return ++instr;
@@ -104,16 +90,6 @@ const instruction* op_push_small(const instruction* instr, AdvancedExecutionStat
 const instruction* op_push_full(const instruction* instr, AdvancedExecutionState& state) noexcept
 {
     state.stack.push(*instr->arg.push_value);
-    return ++instr;
-}
-
-template <evmc_opcode LogOp>
-const instruction* op_log(const instruction* instr, AdvancedExecutionState& state) noexcept
-{
-    constexpr auto num_topics = LogOp - OP_LOG0;
-    const auto status_code = log(state, num_topics);
-    if (status_code != EVMC_SUCCESS)
-        return state.exit(status_code);
     return ++instr;
 }
 
@@ -307,11 +283,11 @@ constexpr std::array<instruction_exec_fn, 256> instruction_implementations = [](
     table[OP_SWAP15] = op<swap<15>>;
     table[OP_SWAP16] = op<swap<16>>;
 
-    table[OP_LOG0] = op_log<OP_LOG0>;
-    table[OP_LOG1] = op_log<OP_LOG1>;
-    table[OP_LOG2] = op_log<OP_LOG2>;
-    table[OP_LOG3] = op_log<OP_LOG3>;
-    table[OP_LOG4] = op_log<OP_LOG4>;
+    table[OP_LOG0] = op<log<0>>;
+    table[OP_LOG1] = op<log<1>>;
+    table[OP_LOG2] = op<log<2>>;
+    table[OP_LOG3] = op<log<3>>;
+    table[OP_LOG4] = op<log<4>>;
 
     table[OP_CREATE] = op_create<EVMC_CREATE>;
     table[OP_CALL] = op_call<EVMC_CALL>;
@@ -326,49 +302,36 @@ constexpr std::array<instruction_exec_fn, 256> instruction_implementations = [](
 
     return table;
 }();
-
-template <evmc_revision Rev>
-constexpr op_table create_op_table() noexcept
-{
-    op_table table{};
-    for (size_t i = 0; i < table.size(); ++i)
-    {
-        auto& t = table[i];
-        const auto gas_cost = instr::gas_costs<Rev>[i];
-        if (gas_cost == instr::undefined)
-        {
-            t.fn = op_undefined;
-            t.gas_cost = 0;
-        }
-        else
-        {
-            t.fn = instruction_implementations[i];
-            t.gas_cost = gas_cost;
-            t.stack_req = instr::traits[i].stack_height_required;
-            t.stack_change = instr::traits[i].stack_height_change;
-        }
-    }
-    return table;
-}
-
-constexpr op_table op_tables[] = {
-    create_op_table<EVMC_FRONTIER>(),
-    create_op_table<EVMC_HOMESTEAD>(),
-    create_op_table<EVMC_TANGERINE_WHISTLE>(),
-    create_op_table<EVMC_SPURIOUS_DRAGON>(),
-    create_op_table<EVMC_BYZANTIUM>(),
-    create_op_table<EVMC_CONSTANTINOPLE>(),
-    create_op_table<EVMC_PETERSBURG>(),
-    create_op_table<EVMC_ISTANBUL>(),
-    create_op_table<EVMC_BERLIN>(),
-    create_op_table<EVMC_LONDON>(),
-};
-static_assert(
-    std::size(op_tables) == EVMC_MAX_REVISION + 1, "op table entry missing for an EVMC revision");
 }  // namespace
 
 EVMC_EXPORT const op_table& get_op_table(evmc_revision rev) noexcept
 {
+    static constexpr auto op_tables = []() noexcept {
+        std::array<op_table, EVMC_MAX_REVISION + 1> tables{};
+        for (size_t r = EVMC_FRONTIER; r <= EVMC_MAX_REVISION; ++r)
+        {
+            auto& table = tables[r];
+            for (size_t i = 0; i < table.size(); ++i)
+            {
+                auto& t = table[i];
+                const auto gas_cost = instr::gas_costs[r][i];
+                if (gas_cost == instr::undefined)
+                {
+                    t.fn = op_undefined;
+                    t.gas_cost = 0;
+                }
+                else
+                {
+                    t.fn = instruction_implementations[i];
+                    t.gas_cost = gas_cost;
+                    t.stack_req = instr::traits[i].stack_height_required;
+                    t.stack_change = instr::traits[i].stack_height_change;
+                }
+            }
+        }
+        return tables;
+    }();
+
     return op_tables[rev];
 }
 }  // namespace evmone
